@@ -1,0 +1,72 @@
+import tkinter as tk
+import urllib.request
+
+class Application(tk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.master = master
+        self.pack()
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.prompt = tk.Label(self, text="Enter NRC URL Here:")
+        self.prompt.pack(side="top")
+        self.field = tk.Entry(self, width=100)
+        self.field.pack(side="top")
+        self.confirm = tk.Button(self)
+        self.confirm["text"] = "Go!"
+        self.confirm["command"] = self.run
+        self.confirm.pack(side="left")
+
+        self.quit = tk.Button(self, text="QUIT", fg="red",
+                              command=self.master.destroy)
+        self.quit.pack(side="right")
+
+    def run(self):
+        source = str(urllib.request.urlopen(self.field.get()).read(), 'utf-8')
+
+        start = source.find("content ")
+        end = source.find("article__footer", start)
+        body = source[start:end]
+
+        cleanbody = u""
+        tagvar = True
+
+        for i in range(len(body)):
+            if body[i] == "<":
+                tagvar = True
+                #print("< found, stopping html tag")
+            elif body[i] == ">":
+                tagvar = False
+                #print("> found, html tag ended")
+            elif tagvar == False:
+                #print("not inside html tag, appending if clean")
+                cleanbody += body[i]
+
+        notabbody = u""
+        skip = False
+
+        for i in range(len(cleanbody)):
+            if skip == False:
+                if cleanbody[i] == "\\":
+                    if cleanbody[i+1] != "n":
+                        skip = True
+                    else:
+                        notabbody += "\\n"
+                        skip = True
+                else: notabbody += cleanbody[i]           
+            else:
+                skip = False
+
+        bodylist = notabbody.split("\\n")
+
+        for i in bodylist:
+            if i != "":
+                print(i)
+
+root = tk.Tk()
+root.minsize(500,100)
+root.iconbitmap("C:\\Users\\lucwi\\OneDrive\\Documents\\logo.ico")
+root.title("Luc\'s NRC Paywall Cracker")
+app = Application(master=root)
+app.mainloop()
